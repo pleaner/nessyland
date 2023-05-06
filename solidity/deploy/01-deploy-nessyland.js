@@ -21,3 +21,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         await verify(nessyland.address, arguments)
     }
 }
+
+module.exports.tags = ["all", "nessyland", "main"]
