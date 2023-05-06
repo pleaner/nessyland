@@ -42,7 +42,7 @@ contract Nessyland is ERC721 {
         string memory _description,
         string memory _catagory,
         string memory _subcatagory,
-        uint256 _price,
+        uint256 _price, // fix pricing
         string memory _content
     ) external returns (uint256) {
         Article memory article = Article(_title, _description, block.timestamp, msg.sender, _price);
