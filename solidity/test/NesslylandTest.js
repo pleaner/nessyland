@@ -163,7 +163,7 @@ const parseEther = ethers.utils.parseEther;
             })
 
             it("Can Purchase Permission to read", async function () {
-                const {nessyland, nessylandReader, deployer, author, reader, gasSpentAthor} = await loadFixture(readArticleFixture);
+                const {nessyland, nessylandReader} = await loadFixture(readArticleFixture);
 
                 const article = await nessyland.getArticleMetadata("0")
                 const tx = await nessylandReader.purchaseRightToContent("0", {value: article.price})
@@ -173,7 +173,7 @@ const parseEther = ethers.utils.parseEther;
             })
 
             it("Pay correct amount to read article", async function () {
-                const {nessyland, nessylandReader, deployer, author, reader, gasSpentAthor} = await loadFixture(readArticleFixture);
+                const {nessyland, nessylandReader, reader} = await loadFixture(readArticleFixture);
                 // Balances Before 
                 expect(await reader.getBalance()).to.equal(parseEther("10000"))
 
