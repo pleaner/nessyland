@@ -3,6 +3,9 @@ pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
+error Nessyland__UnauthorisedContentRead(uint tokenId);
+error Nessyland__NotEngoughPayment(uint price, uint paid);
+
 contract Nessyland is ERC721 {
     // Events
     event Published(
@@ -11,7 +14,17 @@ contract Nessyland is ERC721 {
         string indexed subcatagory,
         string title,
         string description,
-        uint published
+        uint price
+    );
+
+    event PurchaseRightToRead(
+        address indexed author,
+        address indexed owner,
+        address reader,
+        uint indexed tokenId,
+        string title,
+        uint price,
+        uint timestamp
     );
 
     // Structs
@@ -24,6 +37,8 @@ contract Nessyland is ERC721 {
         uint256 price;
     }
 
+    uint private FEE_PERCENTAGE = 3;
+
     // Articles
     uint256 s_tokenCounter = 0;
     mapping(uint256 => Article) private s_tokenIdToArticle;
@@ -31,7 +46,16 @@ contract Nessyland is ERC721 {
     mapping(address => uint256[]) private s_authorToArticleIds;
 
     // Read Features
-    mapping(uint256 => mapping(address => bool)) private s_tokenIdToReadPermission;
+    mapping(uint256 => mapping(address => bool)) private s_tokenIdToContentPermission;
+    mapping(address => uint) s_balanceDue;
+
+    // Modifiers
+    modifier canReadContent(uint _tokenId) {
+        if (!hasArticleReadPermission(_tokenId)) {
+            revert Nessyland__UnauthorisedContentRead(_tokenId);
+        }
+        _;
+    }
 
     // Functions
     constructor() ERC721("Nessyland", "NSYLD") {}
@@ -63,10 +87,35 @@ contract Nessyland is ERC721 {
     //     return "TokenUrl";
     // }
 
-    // Transfer Article
+    // TODO Transfer Article
+
     // Buy Right to Read Article
+    function purchaseRightToContent(uint _tokenId) public payable returns (uint) {
+        Article memory atricle = s_tokenIdToArticle[_tokenId];
+
+        if (msg.value < atricle.price) {
+            revert Nessyland__NotEngoughPayment(atricle.price, msg.value);
+        }
+
+        s_balanceDue[_ownerOf(_tokenId)] += msg.value * (1 - (FEE_PERCENTAGE / 100));
+        grantContentPermission(msg.sender, _tokenId);
+        emit PurchaseRightToRead(
+            atricle.author,
+            _ownerOf(_tokenId),
+            msg.sender,
+            _tokenId,
+            atricle.title,
+            atricle.price,
+            block.timestamp
+        );
+        return _tokenId;
+    }
+
+    function grantContentPermission(address _reader, uint _tokenId) internal {
+        s_tokenIdToContentPermission[_tokenId][_reader] = true;
+    }
+
     // Read Article
-    // Get Articles from Author
 
     // View Functions
     function getTokenCounter() external view returns (uint256) {
@@ -86,5 +135,9 @@ contract Nessyland is ERC721 {
         }
 
         return result;
+    }
+
+    function hasArticleReadPermission(uint _tokeId) public view returns (bool) {
+        return s_tokenIdToContentPermission[_tokeId][msg.sender];
     }
 }

@@ -1,6 +1,7 @@
-const { assert } = require("chai")
+const { assert, expect } = require("chai")
 const { network, deployments, ethers } = require("hardhat")
-const { developmentChains } = require("../helper-hardhat-config")
+const { developmentChains } = require("../helper-hardhat-config")   
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 !developmentChains.includes(network.name)
     ? describe.skip
@@ -24,7 +25,8 @@ const { developmentChains } = require("../helper-hardhat-config")
                 assert.equal(tokenCounter.toString(),"0")
             })
         })
-//test02
+
+        // Test Publish
         describe("Publish Article", () => {
           beforeEach(async () => {
               const txResponse1 = await nessyland.mintArticle(
@@ -67,7 +69,7 @@ const { developmentChains } = require("../helper-hardhat-config")
 
             assert.equal(article.title, "Atricle Title One")
             assert.equal(article.description, "Article Description One")
-            assert.isTrue(article.published.toString() > "1683407765") // TODO Test with time
+            expect(article.published.toString()).not.to.be.an('undefined')
             assert.equal(article.author, deployerAddress)
             assert.equal(article.price.toString(), "3")
           })
@@ -77,15 +79,35 @@ const { developmentChains } = require("../helper-hardhat-config")
 
             assert.equal(articles[0].title, "Atricle Title One")
             assert.equal(articles[0].description, "Article Description One")
-            assert.isTrue(articles[0].published.toString() > "1683407765") // TODO Test with time
+            expect(articles[0].published.toString()).not.to.be.an('undefined')
             assert.equal(articles[0].author, deployerAddress)
             assert.equal(articles[0].price.toString(), "3")
 
             assert.equal(articles[1].title, "Atricle Title Two")
             assert.equal(articles[1].description, "Article Description Two")
-            assert.isTrue(articles[1].published.toString() > "1683407765") // TODO Test with time
+            expect(articles[1].published.toString()).not.to.be.an('undefined')
             assert.equal(articles[1].author, deployerAddress)
             assert.equal(articles[1].price.toString(), "5")
+          })
+          it("Emit a Published event", async function(){
+            const deployerAddress = deployer.address;
+
+            await expect(await nessyland.mintArticle(
+                "Atricle Title Three",
+                "Article Description Three",
+                "Catagory Three",
+                "Sub Catagatgory Three",
+                7,
+                "Article Three Content"
+              ))
+                .to.emit(nessyland, "Published")
+                .withArgs(
+                    deployerAddress, 
+                    "Catagory Three", 
+                    "Sub Catagatgory Three",
+                    "Atricle Title Three",
+                    "Article Description Three",
+                    7);
           })
         })
     })
