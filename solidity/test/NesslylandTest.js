@@ -60,7 +60,7 @@ const parseEther = ethers.utils.parseEther;
               const tokenCounter = await nessyland.getTokenCounter();
               assert.equal(tokenCounter.toString(), "2");
           })
-          it.only("Can priduce the NFT Metadata for a published Article", async function () {
+          it("Can priduce the NFT Metadata for a published Article", async function () {
             const { nessyland } = await loadFixture(publishArticlesFixture);
               const tokenUriBase64 = await nessyland.tokenURI(0)
               var actual = JSON.parse(Buffer.from(tokenUriBase64, 'base64').toString());
@@ -211,8 +211,33 @@ const parseEther = ethers.utils.parseEther;
                 assert.equal(amountDue, expected);
             })
 
-            // TODO test withdrawl pass
-            // TODO test withdrawl fail no balance
+            it("Author can withdrawl due the correct amount", async function () {
+                const {nessyland, nessylandReader, author, gasSpentAthor} = await loadFixture(readArticleFixture);
+
+                // Balances Before 
+                expect(await author.getBalance()).to.equal(parseEther("10000").sub(gasSpentAthor))
+
+                const article = await nessyland.getArticleMetadata("0")
+                await nessylandReader.purchaseRightToContent("0", {value: article.price})
+
+                const nessylandAuthor = nessyland.connect(author);
+
+                // Widrawl
+                const tx = await nessylandAuthor.withdrawl();
+                const readReceipt = await tx.wait(1)
+                const gasSpentWithdrawing = readReceipt.gasUsed.mul(readReceipt.effectiveGasPrice)
+
+                const totalGas = gasSpentAthor.add(gasSpentWithdrawing)
+                const feesCollected = article.price * 0.97;
+
+                expect(await author.getBalance()).to.equal(
+                    (parseEther("10000").sub(totalGas)).add(feesCollected.toString()))
+            })
+
+            it("Attept to withdrawl from zero balance", async function () {
+                const {nessyland} = await loadFixture(readArticleFixture);
+                await expect(nessyland.withdrawl()).to.be.revertedWith( "Nessyland__NoBlanceDue()")
+            })
         })
 
     })

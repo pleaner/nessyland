@@ -169,10 +169,11 @@ contract Nessyland is ERC721 {
             revert Nessyland__NoBlanceDue();
         }
         (bool success, ) = payable(msg.sender).call{value: amount}("");
-        if (!success) {
-            revert Nessyland__WithdawlFailed();
-        } else {
+        if (success) {
+            s_balanceDue[msg.sender] = 0; // reset balance
             emit Withdrawl(msg.sender, amount);
+        } else {
+            revert Nessyland__WithdawlFailed();
         }
     }
 
