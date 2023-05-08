@@ -246,6 +246,7 @@ const parseEther = ethers.utils.parseEther;
 
             // TODO test Content
             // TODO test Commission
+            // TODO test Royalties
         })
 
     })

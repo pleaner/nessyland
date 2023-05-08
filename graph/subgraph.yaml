@@ -1,0 +1,45 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Nessyland
+    network: sepolia
+    source:
+      address: "0xBfa93b612Ff6d7E1eFCb3E6738a1F8C535bcCcc5"
+      abi: Nessyland
+      startBlock: 3443746
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Approval
+        - ApprovalForAll
+        - OwnershipTransferred
+        - Published
+        - PurchaseRightToRead
+        - Transfer
+        - Withdrawl
+        - WithdrawlComission
+      abis:
+        - name: Nessyland
+          file: ./abis/Nessyland.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Published(indexed address,indexed string,indexed string,string,string,uint256)
+          handler: handlePublished
+        - event: PurchaseRightToRead(indexed address,indexed address,address,indexed uint256,string,uint256)
+          handler: handlePurchaseRightToRead
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: Withdrawl(indexed address,uint256)
+          handler: handleWithdrawl
+        - event: WithdrawlComission(indexed address,uint256)
+          handler: handleWithdrawlComission
+      file: ./src/nessyland.ts

@@ -23,6 +23,3 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 }
 
 module.exports.tags = ["all", "nessyland", "main"]
-
-
-/// https://sepolia.etherscan.io/address/0xBfa93b612Ff6d7E1eFCb3E6738a1F8C535bcCcc5#code

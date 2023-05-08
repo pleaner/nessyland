@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "base64-sol/base64.sol";
@@ -14,7 +14,9 @@ error Nessyland__WithdawlFailed();
 error Nessyland__NoCommissionDue();
 error Nessyland__WithdawCommissionlFailed();
 
-contract Nessyland is ERC721, Ownable {
+// TODO Style Guide: https://youtu.be/gyMwXuJrbJQ
+
+contract Nessyland is ERC721Royalty, Ownable {
     // Events
     event Published(
         address indexed author,
@@ -48,6 +50,7 @@ contract Nessyland is ERC721, Ownable {
     }
 
     uint private FEE_PERCENTAGE = 3;
+    uint private ROYALTY_PERCENTAGE = 15;
 
     // Articles
     uint256 s_tokenCounter = 0;
@@ -78,7 +81,7 @@ contract Nessyland is ERC721, Ownable {
     }
 
     // Functions
-    constructor() ERC721("Nessyland", "NSYLD") {}
+    constructor() ERC721("Nessyland", "NSYLD") ERC721Royalty() {}
 
     // Mint Article
     function mintArticle(
@@ -88,7 +91,7 @@ contract Nessyland is ERC721, Ownable {
         string memory _subcatagory,
         uint256 _price,
         string memory _content
-    ) external returns (uint256) {
+    ) public returns (uint256) {
         Article memory article = Article(_title, _description, block.timestamp, msg.sender, _price);
 
         s_tokenIdToArticle[s_tokenCounter] = article;
@@ -200,6 +203,12 @@ contract Nessyland is ERC721, Ownable {
         return s_tokenCounter;
     }
 
+    //(s_tokenIdToArticle[_tokenId].author, calculateRoyalties(_salePrice))
+
+    function calculateRoyalties(uint256 _salePrice) public view returns (uint) {
+        return (_salePrice * ROYALTY_PERCENTAGE) / 100;
+    }
+
     function getArticleMetadata(uint _tokenId) public view returns (Article memory) {
         return s_tokenIdToArticle[_tokenId];
     }
@@ -248,5 +257,17 @@ contract Nessyland is ERC721, Ownable {
     // for metadata base64
     function _baseURI() internal pure override returns (string memory) {
         return "data:application/json;base64,";
+    }
+
+    /**
+     * @inheritdoc IERC2981
+     */
+    function royaltyInfo(
+        uint256 _tokenId,
+        uint256 _salePrice
+    ) public view virtual override returns (address, uint256) {
+        address author = s_tokenIdToArticle[_tokenId].author;
+        uint256 royaltyAmount = (_salePrice * ROYALTY_PERCENTAGE) / 100;
+        return (author, royaltyAmount);
     }
 }
