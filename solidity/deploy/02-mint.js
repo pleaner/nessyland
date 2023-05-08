@@ -13,7 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         "Modern",
         ethers.utils.parseEther("0.001"),
         contentOne);
-    await tx1.wait(1)
+    await tx1.wait(6)
 
     console.log(`NFT at index 0 has ${await nessyland.tokenURI(0)}`)
     
@@ -24,7 +24,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         "Modern",
         ethers.utils.parseEther("0.001"),
         contentTwo)
-    await tx1.wait(1)
+    await tx1.wait(6)
     console.log(`NFT at index 0 has ${await nessyland.tokenURI(1)}`)
     
 }
