@@ -23,3 +23,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 }
 
 module.exports.tags = ["all", "nessyland", "main"]
+
+
+/// Deploy https://youtu.be/gyMwXuJrbJQ?t=83713

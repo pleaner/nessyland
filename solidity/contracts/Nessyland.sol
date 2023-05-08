@@ -226,4 +226,9 @@ contract Nessyland is ERC721 {
     function getComission(uint price) public view returns (uint) {
         return (price * FEE_PERCENTAGE) / 100;
     }
+
+    // for metadata base64
+    function _baseURI() internal pure override returns (string memory) {
+        return "data:application/json;base64,";
+    }
 }

@@ -63,7 +63,11 @@ const parseEther = ethers.utils.parseEther;
           it("Can priduce the NFT Metadata for a published Article", async function () {
             const { nessyland } = await loadFixture(publishArticlesFixture);
               const tokenUriBase64 = await nessyland.tokenURI(0)
-              var actual = JSON.parse(Buffer.from(tokenUriBase64, 'base64').toString());
+              
+              const jsonString = tokenUriBase64.slice(29) // remove prefix: data:application/json;base64,
+            //   console.log('prefix: ' + tokenUriBase64.slice(0, 29) )
+            //   console.log("jsonString: " + jsonString)
+              var actual = JSON.parse((Buffer.from(jsonString, 'base64')).toString());
               assert.equal(actual.name, "Atricle Title One")
               assert.equal(actual.description, 'Article Description One')
               assert.equal(actual.external_url, 'https://www.nessy.land/article/0')
