@@ -55,13 +55,23 @@ const parseEther = ethers.utils.parseEther;
               return {nessyland, deployer, reader, buyer}
             }
           
-          it("Allows users to Publish an Article NFT, and updates appropriately", async function () {
+          it("Allows users to Publish an Article NFT, and updates token Counter appropriately", async function () {
             const { nessyland } = await loadFixture(publishArticlesFixture);
-            // TODO  const tokenURI = await nessyland.tokenURI(0)
-              const tokenCounter = await nessyland.getTokenCounter()
-
-              assert.equal(tokenCounter.toString(), "2")
-            //   assert.equal(tokenURI, await nessyland.TOKEN_URI())
+              const tokenCounter = await nessyland.getTokenCounter();
+              assert.equal(tokenCounter.toString(), "2");
+          })
+          it.only("Can priduce the NFT Metadata for a published Article", async function () {
+            const { nessyland } = await loadFixture(publishArticlesFixture);
+              const tokenUriBase64 = await nessyland.tokenURI(0)
+              var actual = JSON.parse(Buffer.from(tokenUriBase64, 'base64').toString());
+              assert.equal(actual.name, "Atricle Title One")
+              assert.equal(actual.description, 'Article Description One')
+              assert.equal(actual.external_url, 'https://www.nessy.land/article/0')
+              assert.equal(actual.attributes[0].display_type, "date")
+              assert.equal(actual.attributes[0].trait_type, "published")
+              expect(actual.attributes[0].value).is.not.null
+              assert.equal(actual.attributes[1].trait_type, 'Author')
+              assert.equal(actual.attributes[1].value, '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266')
           })
           it("Show the correct balance and owner of an NFT", async function () {
             const { nessyland, deployer } = await loadFixture(publishArticlesFixture);
@@ -189,7 +199,7 @@ const parseEther = ethers.utils.parseEther;
             })
 
             it("Author become due the correct amount", async function () {
-                const {nessyland, nessylandReader, deployer, author, reader, gasSpentAthor} = await loadFixture(readArticleFixture);
+                const {nessyland, nessylandReader, author} = await loadFixture(readArticleFixture);
 
                 const article = await nessyland.getArticleMetadata("0")
                 await nessylandReader.purchaseRightToContent("0", {value: article.price})
@@ -200,15 +210,9 @@ const parseEther = ethers.utils.parseEther;
 
                 assert.equal(amountDue, expected);
             })
+
+            // TODO test withdrawl pass
+            // TODO test withdrawl fail no balance
         })
 
     })
-
-    "actual"
-    9999989850070184973858
-    9999999850070184973858
-    "expwcted"
-
-    -300000001130496
-    9700000000000000
-    "fees to author"

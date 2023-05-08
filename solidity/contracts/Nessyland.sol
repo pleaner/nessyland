@@ -2,10 +2,14 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "base64-sol/base64.sol";
 
 error Nessyland__UnauthorisedContentRead(uint tokenId);
 error Nessyland__NotEngoughPayment(uint price, uint paid);
 error Nessyland__ArticleDoesNotExist(uint tokenId);
+error Nessyland__NoBlanceDue();
+error Nessyland__WithdawlFailed();
 
 contract Nessyland is ERC721 {
     // Events
@@ -24,9 +28,10 @@ contract Nessyland is ERC721 {
         address reader,
         uint indexed tokenId,
         string title,
-        uint price,
-        uint timestamp
+        uint price
     );
+
+    event Withdrawl(address indexed withdrawer, uint amount);
 
     // Structs
 
@@ -50,6 +55,7 @@ contract Nessyland is ERC721 {
     mapping(uint256 => mapping(address => bool)) private s_tokenIdToContentPermission;
     mapping(address => uint) s_balanceDue;
     uint private earnedCommision;
+    string private articleBaseUrl = "https://www.nessy.land/article/";
 
     // Modifiers
     modifier canReadContent(uint _tokenId) {
@@ -94,9 +100,39 @@ contract Nessyland is ERC721 {
         return s_tokenCounter;
     }
 
-    // function tokenURI(uint256 /*tokenId*/) public view override returns (string memory) {
-    //     return "TokenUrl";
-    // }
+    // TODO: image, https://docs.opensea.io/docs/metadata-standards
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override articleExistist(_tokenId) returns (string memory) {
+        Article memory atricle = s_tokenIdToArticle[_tokenId];
+        return
+            string(
+                abi.encodePacked(
+                    _baseURI(),
+                    Base64.encode(
+                        bytes(
+                            abi.encodePacked(
+                                '{"name":"',
+                                atricle.title,
+                                '","description":"',
+                                atricle.description,
+                                '","external_url":"',
+                                articleBaseUrl,
+                                Strings.toString(_tokenId),
+                                '","attributes":[',
+                                '{"display_type": "date","trait_type":"published","value":',
+                                Strings.toString(atricle.published),
+                                "},",
+                                '{"trait_type": "Author","value":"',
+                                Strings.toHexString(uint160(atricle.author), 20),
+                                '"}',
+                                "]}"
+                            )
+                        )
+                    )
+                )
+            );
+    }
 
     function purchaseRightToContent(
         uint _tokenId
@@ -117,8 +153,7 @@ contract Nessyland is ERC721 {
             msg.sender,
             _tokenId,
             atricle.title,
-            atricle.price,
-            block.timestamp
+            atricle.price
         );
 
         return _tokenId;
@@ -128,7 +163,18 @@ contract Nessyland is ERC721 {
         s_tokenIdToContentPermission[_tokenId][_reader] = true;
     }
 
-    // TODO Withdrawl Balance Due
+    function withdrawl() public {
+        uint amount = s_balanceDue[msg.sender];
+        if (amount == 0) {
+            revert Nessyland__NoBlanceDue();
+        }
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        if (!success) {
+            revert Nessyland__WithdawlFailed();
+        } else {
+            emit Withdrawl(msg.sender, amount);
+        }
+    }
 
     // View Functions
     function getTokenCounter() external view returns (uint256) {
