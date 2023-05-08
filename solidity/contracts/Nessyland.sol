@@ -2,6 +2,7 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "base64-sol/base64.sol";
 
@@ -10,8 +11,10 @@ error Nessyland__NotEngoughPayment(uint price, uint paid);
 error Nessyland__ArticleDoesNotExist(uint tokenId);
 error Nessyland__NoBlanceDue();
 error Nessyland__WithdawlFailed();
+error Nessyland__NoCommissionDue();
+error Nessyland__WithdawCommissionlFailed();
 
-contract Nessyland is ERC721 {
+contract Nessyland is ERC721, Ownable {
     // Events
     event Published(
         address indexed author,
@@ -82,7 +85,7 @@ contract Nessyland is ERC721 {
         string memory _description,
         string memory _catagory,
         string memory _subcatagory,
-        uint256 _price, // fix pricing
+        uint256 _price,
         string memory _content
     ) external returns (uint256) {
         Article memory article = Article(_title, _description, block.timestamp, msg.sender, _price);
@@ -177,6 +180,20 @@ contract Nessyland is ERC721 {
         }
     }
 
+    function withdrawlCommission() external onlyOwner {
+        uint amount = earnedCommision;
+        if (amount == 0) {
+            revert Nessyland__NoCommissionDue();
+        }
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        if (success) {
+            earnedCommision = 0; // reset balance
+            emit WithdrawlComission(msg.sender, amount);
+        } else {
+            revert Nessyland__WithdawCommissionlFailed();
+        }
+    }
+
     // View Functions
     function getTokenCounter() external view returns (uint256) {
         return s_tokenCounter;
@@ -215,7 +232,7 @@ contract Nessyland is ERC721 {
         return s_balanceDue[msg.sender];
     }
 
-    function getEarnedCommision() public view returns (uint) {
+    function getEarnedCommision() public view onlyOwner returns (uint) {
         return earnedCommision;
     }
 
